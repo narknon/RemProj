@@ -29,6 +29,7 @@ class UEntitlementType;
 class UInventoryComponent;
 class ULevelStreaming;
 class UPersistenceComponent;
+class UQuestComponent;
 class USpawnTable;
 class UVariableComponent;
 class UWorld;
@@ -54,6 +55,18 @@ public:
     
     UPROPERTY(AssetRegistrySearchable, BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     ERemnantQuestDebugState DebugState;
+    
+    UPROPERTY(AssetRegistrySearchable, BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool IsOneShot;
+    
+    UPROPERTY(AssetRegistrySearchable, BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    int32 ManualOrderID;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, meta=(AllowPrivateAccess=true))
+    bool IgnoreTileExclusivity;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, meta=(AllowPrivateAccess=true))
+    bool IgnoresTileIDRequirement;
     
     UPROPERTY(AssetRegistrySearchable, BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     EQuestMode QuestGameMode;
@@ -94,7 +107,7 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, SaveGame, meta=(AllowPrivateAccess=true))
     FString BiomeName;
     
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    UPROPERTY(AssetRegistrySearchable, BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     TSubclassOf<UEntitlementType> RequiredEntitlement;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
@@ -123,7 +136,7 @@ protected:
     TArray<FRemnantQuestBreadcrumbInfo> BreadcrumbInfo;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Transient, ReplicatedUsing=OnRep_Status, meta=(AllowPrivateAccess=true))
-    ERemnantQuestStatus Status;
+    ERemnantQuestStatus ServerStatus;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, SaveGame, meta=(AllowPrivateAccess=true))
     int32 LastCheckpointZoneID;
@@ -147,9 +160,10 @@ protected:
     TMap<FString, int32> UsageCount;
     
 public:
-    ARemnantQuest();
+    ARemnantQuest(const FObjectInitializer& ObjectInitializer);
+
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    
+
     UFUNCTION(BlueprintCallable, BlueprintPure)
     static bool ShowQuestBreadcrumbs();
     
@@ -160,14 +174,27 @@ protected:
     UFUNCTION(BlueprintCallable)
     bool ShouldBreadcrumb(FZoneLinkInfo ZoneLink);
     
+public:
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void SetRespawn(const FZoneLinkInfo& Respawn);
+    
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void SetLastCheckpoint(const FZoneLinkInfo& Checkpoint);
+    
+protected:
     UFUNCTION(BlueprintCallable)
     void OnRep_Status();
     
     UFUNCTION(BlueprintCallable)
     void OnRep_BreadcrumbInfo();
     
+public:
+    UFUNCTION(BlueprintCallable)
+    void OnComponentAdded(UQuestComponent* QuestComponent, int32 OptionalSeed);
+    
+protected:
     UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
-    void MulticastUnloadContainerLevel();
+    void MulticastUnloadContainerLevel(bool UpdateServerStatus);
     
     UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
     void MulticastSetCheckpoint();
@@ -186,10 +213,25 @@ public:
     bool IsLoaded() const;
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
+    bool IsChildQuest() const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    bool HasRootQuestSlotID() const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
     bool HasRespawn() const;
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
+    bool HasQuestEntitlements() const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
     bool HasLastCheckpoint() const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    bool HasFailed() const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    bool HasBaseQuestSlotID() const;
     
 protected:
     UFUNCTION(BlueprintCallable)
@@ -214,11 +256,17 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure)
     FZoneLinkInfo GetRespawn() const;
     
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent, BlueprintPure)
+    bool GetQuestZoneLabelOverride(FText& OutText);
+    
     UFUNCTION(BlueprintCallable, BlueprintPure)
-    int32 GetQuestLevel();
+    int32 GetQuestLevel() const;
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
     UInventoryComponent* GetQuestInventory();
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    void GetQuestEntitlements(TArray<TSubclassOf<UEntitlementType>>& OutEntitlements, bool bGetMissingOnly) const;
     
     UFUNCTION(BlueprintCallable)
     bool GetObjectQuestValue(UClass* ObjectBP, UPARAM(Ref) int32& ObjectValue, UPARAM(Ref) float& OutSellScalar, int32& OutPickupValue);
@@ -252,9 +300,12 @@ protected:
     
 public:
     UFUNCTION(BlueprintCallable)
-    void ActivateQuest();
+    void ActivateQuestItemEvents();
     
+    UFUNCTION(BlueprintCallable)
+    ERemnantQuestStatus ActivateQuest();
     
+
     // Fix for true pure virtual functions not being implemented
 };
 

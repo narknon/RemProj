@@ -8,6 +8,7 @@
 #include "EquipmentModSlot.h"
 #include "InHandDelegateDelegate.h"
 #include "Item.h"
+#include "LoadableItemAsset.h"
 #include "SoundGunfire.h"
 #include "Equipment.generated.h"
 
@@ -17,6 +18,7 @@ class AUIHud;
 class UActorCustomizationComponent;
 class UAnimInstanceGunfire;
 class UInventoryComponent;
+class UObject;
 class UStatsComponent;
 
 UCLASS(Blueprintable)
@@ -42,6 +44,15 @@ public:
     bool UseEquipmentAnimTimings;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool FallbackToCharacterTimings;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool StopAnimsRegardlessOfTimingTarget;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool bSupportSlaveAnimations;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     TArray<FEquipmentModSlot> ModSlots;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
@@ -56,6 +67,9 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FSoundGunfire EquipSound;
     
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    TArray<FLoadableItemAsset> EquipmentAssets;
+    
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Instanced, meta=(AllowPrivateAccess=true))
     UStatsComponent* StatsComp;
     
@@ -64,6 +78,9 @@ public:
     
     UPROPERTY(BlueprintAssignable, BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FEquipmentDelegate OnUnequippedEvent;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    FEquipmentDelegate OnEquipStateUpdated;
     
     UPROPERTY(BlueprintAssignable, BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FInHandDelegate OnInHandChangedEvent;
@@ -100,9 +117,10 @@ protected:
     uint8 bIsInHandReplicated: 1;
     
 public:
-    AEquipment();
+    AEquipment(const FObjectInitializer& ObjectInitializer);
+
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    
+
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     bool ValidateEquip(ACharacterGunfire* ToCharacter);
     
@@ -165,8 +183,14 @@ protected:
     void OnHitTarget(const FDamageInfo& DamageInfo);
     
 public:
+    UFUNCTION(BlueprintCallable)
+    void OnFinishLoadingAssets();
+    
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
     void OnEquipped();
+    
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void OnEquipmentAssetsLoaded();
     
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
     void OnDetached();
@@ -218,6 +242,9 @@ protected:
     float GetStat(FName Stat);
     
 public:
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void GetSlaveAnimLayerOverrideFor(FName AnimationID, UPARAM(Ref) FName& InOutLayer);
+    
     UFUNCTION(BlueprintCallable, BlueprintPure)
     uint8 GetModSlotIndexByNameID(FName SlotNameID);
     
@@ -240,6 +267,12 @@ public:
     AEquipmentMod* GetEquipmentMod(uint8 Slot);
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
+    UClass* GetEquipmentAssetClass(FName AssetName) const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    UObject* GetEquipmentAsset(FName AssetName) const;
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure)
     FName GetCurrentAnimation() const;
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -247,6 +280,9 @@ public:
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
     TArray<AEquipmentMod*> GetAttachedMods();
+    
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    FName GetAnimationLayer();
     
     UFUNCTION(BlueprintCallable)
     void Detach();
@@ -262,6 +298,9 @@ protected:
     void ComputeCharacterStats();
     
 public:
+    UFUNCTION(BlueprintCallable, BlueprintPure)
+    bool AreAssetsLoaded() const;
+    
     UFUNCTION(BlueprintCallable)
     void Activate();
     

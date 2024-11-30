@@ -2,6 +2,21 @@
 #include "Net/UnrealNetwork.h"
 #include "Templates/SubclassOf.h"
 
+AEquipmentMod::AEquipmentMod(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
+    this->bNetUseOwnerRelevancy = true;
+    this->Hidden = true;
+    this->ReplicateMod = false;
+    this->CanBeRemoved = true;
+    this->CustomizationSlot = TEXT("Default");
+    this->EquipOwner = NULL;
+    this->EquippedSlot = 0;
+    this->EquippedLevel = 0;
+}
+
+bool AEquipmentMod::ValidateAttach(ACharacterGunfire* ToCharacter) const {
+    return false;
+}
+
 bool AEquipmentMod::UnequipMod(UInventoryComponent* Inventory, int32 ItemId, uint8 Slot, bool AddToInventory) {
     return false;
 }
@@ -12,6 +27,15 @@ void AEquipmentMod::ScaleStat(FName Stat, float Scalar, bool AutoInitValue) cons
 void AEquipmentMod::OnPostComputeStats_Implementation() const {
 }
 
+void AEquipmentMod::OnFinishLoadingAssets() {
+}
+
+void AEquipmentMod::OnEquipmentModAssetsLoaded_Implementation() {
+}
+
+
+void AEquipmentMod::OnEquipmentEquipStateUpdated(AEquipment* Equipment) {
+}
 
 void AEquipmentMod::OnDetached_Implementation() {
 }
@@ -49,6 +73,14 @@ bool AEquipmentMod::GetInspectInfoForModBySlotName(AActor* Actor, UInventoryComp
     return false;
 }
 
+UClass* AEquipmentMod::GetEquipmentModAssetClass(FName AssetName) const {
+    return NULL;
+}
+
+UObject* AEquipmentMod::GetEquipmentModAsset(FName AssetName) const {
+    return NULL;
+}
+
 AEquipment* AEquipmentMod::GetEquipment() const {
     return NULL;
 }
@@ -65,6 +97,14 @@ bool AEquipmentMod::EquipMod(UInventoryComponent* Inventory, int32 ItemId, uint8
     return false;
 }
 
+bool AEquipmentMod::CanEquipMod(ACharacterGunfire* Character, TSubclassOf<AEquipmentMod> Mod) {
+    return false;
+}
+
+bool AEquipmentMod::AreEquipmentModAssetsLoaded() const {
+    return false;
+}
+
 void AEquipmentMod::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
@@ -73,13 +113,4 @@ void AEquipmentMod::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(AEquipmentMod, EquippedLevel);
 }
 
-AEquipmentMod::AEquipmentMod() {
-    this->Hidden = true;
-    this->ReplicateMod = false;
-    this->CanBeRemoved = true;
-    this->CustomizationSlot = TEXT("Default");
-    this->EquipOwner = NULL;
-    this->EquippedSlot = 0;
-    this->EquippedLevel = 0;
-}
 

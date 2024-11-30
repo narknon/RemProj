@@ -1,5 +1,31 @@
 #include "RemnantWeaponMod.h"
 
+ARemnantWeaponMod::ARemnantWeaponMod(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
+    this->PowerBasis = 100.00f;
+    this->MaxCharges = 1;
+    this->InputMode = EModInputMode::Press;
+    this->PreviewAnimTags.AddDefaulted(1);
+    this->bStowWeaponForPreview = true;
+    this->MinimumHoldTime = 0.20f;
+    this->MaximumHoldTime = 0.00f;
+    this->bShouldUseChargesDuringWeaponMode = true;
+    this->bUseAllChargesOnConsume = false;
+    this->NumChargesConsumedOnAllConsume = 0;
+    this->NumChargesConsumedOnUse = 1;
+    this->WeaponModeHasInfiniteClip = false;
+    this->bToggleable = true;
+    this->bHasSecondaryAction = false;
+    this->bAllowDeactivateIfNotSecondaryUse = false;
+    this->bRequiresAllowActionForUse = true;
+    this->bBlocksActionsWhileInUse = true;
+    this->AllowWeaponModeDuringAction = false;
+    this->AllowUseDuringWeaponUseDown = true;
+    this->NoModGenWhileModActive = false;
+    this->SkipDeactivateAnimForLastCharge = false;
+    this->LoopUseAnimation = false;
+    this->bStowWeaponForUseAnimation = false;
+}
+
 bool ARemnantWeaponMod::ShowReticule_Implementation() {
     return false;
 }
@@ -38,9 +64,6 @@ void ARemnantWeaponMod::OnFireBegin_Implementation() {
 void ARemnantWeaponMod::OnFire_Implementation(const FVector& From, const FVector& To, float WeaponSpread) {
 }
 
-void ARemnantWeaponMod::OnFinishLoadingAssets() {
-}
-
 void ARemnantWeaponMod::OnEndUse_Implementation() {
 }
 
@@ -58,7 +81,13 @@ void ARemnantWeaponMod::OnBeginUse_Implementation() {
 void ARemnantWeaponMod::OnActivate_Implementation() {
 }
 
+void ARemnantWeaponMod::ModifyModPowerEx(AActor* TargetActor, EEquipmentTarget EquipmentTarget, float Delta, FName TargetSlotNameID) {
+}
+
 void ARemnantWeaponMod::ModifyModPower(float Delta) {
+}
+
+void ARemnantWeaponMod::ModifyIsSecondaryUse_Implementation(bool& bIsSecondaryUse) {
 }
 
 bool ARemnantWeaponMod::IsUseState(FName State) const {
@@ -77,6 +106,10 @@ float ARemnantWeaponMod::GetWindupOverdrawnProgress_Implementation(const float T
     return 0.0f;
 }
 
+TArray<ARemnantWeaponMod*> ARemnantWeaponMod::GetWeaponModsForModTarget(AActor* TargetActor, EEquipmentTarget EquipmentTarget, FName TargetSlotNameID) {
+    return TArray<ARemnantWeaponMod*>();
+}
+
 ARemnantRangedWeapon* ARemnantWeaponMod::GetWeapon() const {
     return NULL;
 }
@@ -89,20 +122,24 @@ float ARemnantWeaponMod::GetPowerBasis() const {
     return 0.0f;
 }
 
-UClass* ARemnantWeaponMod::GetModAssetAsClass(FName AssetName) const {
-    return NULL;
-}
-
-UObject* ARemnantWeaponMod::GetModAsset(FName AssetName) const {
-    return NULL;
+FName ARemnantWeaponMod::GetModDeactivateAnimation_Implementation() {
+    return NAME_None;
 }
 
 float ARemnantWeaponMod::GetModActiveRemainingPct_Implementation() {
     return 0.0f;
 }
 
+FName ARemnantWeaponMod::GetModActivateAnimation_Implementation() {
+    return NAME_None;
+}
+
 int32 ARemnantWeaponMod::GetMaxCharges_Implementation() const {
     return 0;
+}
+
+bool ARemnantWeaponMod::GetLastAltFireStateHeld() {
+    return false;
 }
 
 bool ARemnantWeaponMod::GetClientAimVector(FVector& AimOrigin, FVector& AimEnd) {
@@ -120,33 +157,21 @@ bool ARemnantWeaponMod::CanDeactivateMod_Implementation() {
     return false;
 }
 
-bool ARemnantWeaponMod::CalculateClientAimVector_Implementation(FVector& AimOrigin, FVector& AimEnd) {
+bool ARemnantWeaponMod::CanAddModPowerFromDamage_Implementation(const FDamageInfo& DamageInfo) {
     return false;
 }
 
-bool ARemnantWeaponMod::AreAssetsLoaded() const {
+bool ARemnantWeaponMod::CalculateClientAimVector_Implementation(FVector& AimOrigin, FVector& AimEnd) {
     return false;
 }
 
 void ARemnantWeaponMod::ApplyDamageInfoToModPower(const FDamageInfo& DamageInfo, float ModPowerScalar, bool bForce, bool bIgnorePenalties, bool bFillActiveMods) {
 }
 
+void ARemnantWeaponMod::AddModPowerEx(FAddModPowerParams Params) {
+}
+
 void ARemnantWeaponMod::AddModPower_Implementation(float Damage, float BonusModPowerMod, bool bFillActiveMods) {
 }
 
-ARemnantWeaponMod::ARemnantWeaponMod() {
-    this->PowerBasis = 100.00f;
-    this->MaxCharges = 1;
-    this->InputMode = EModInputMode::Press;
-    this->PreviewAnimTags.AddDefaulted(1);
-    this->bStowWeaponForPreview = true;
-    this->MinimumHoldTime = 0.20f;
-    this->bUseAllChargesOnConsume = false;
-    this->bToggleable = true;
-    this->bHasSecondaryAction = false;
-    this->bRequiresAllowActionForUse = true;
-    this->bBlocksActionsWhileInUse = true;
-    this->LoopUseAnimation = false;
-    this->bStowWeaponForUseAnimation = false;
-}
 

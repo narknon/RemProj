@@ -2,6 +2,14 @@
 #include "Net/UnrealNetwork.h"
 #include "Templates/SubclassOf.h"
 
+UTraitsComponent::UTraitsComponent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
+    this->TraitPointsPerLevelTable = NULL;
+    this->TraitPointsPerLevel = 1;
+    this->MaxTraitPoints = 60;
+    this->UnlockedTraitLevel = 1;
+    this->TraitPoints = 0;
+}
+
 void UTraitsComponent::Unequip_Implementation(int32 SlotIndex) {
 }
 bool UTraitsComponent::Unequip_Validate(int32 SlotIndex) {
@@ -15,6 +23,12 @@ void UTraitsComponent::SetMaxLevelMod(TSubclassOf<UTrait> TraitBP, uint8 MaxLeve
 }
 
 void UTraitsComponent::SetLevelMod(TSubclassOf<UTrait> TraitBP, uint8 LevelMod, ETraitPointModType ModType, bool bOverrideExistingLevel) {
+}
+
+void UTraitsComponent::Server_CorrectTraitPoints_Implementation(int32 InTraitPoints) {
+}
+bool UTraitsComponent::Server_CorrectTraitPoints_Validate(int32 InTraitPoints) {
+    return true;
 }
 
 void UTraitsComponent::RemoveTraitModifier(TSubclassOf<UTrait> TraitBP, uint8 LevelMod, uint8 MaxLevelMod, ETraitPointModType ModType) {
@@ -45,6 +59,9 @@ bool UTraitsComponent::Purchase_Validate(TSubclassOf<UTrait> TraitBP) {
 void UTraitsComponent::OnRep_Traits() {
 }
 
+void UTraitsComponent::OnRep_TraitPoints() {
+}
+
 void UTraitsComponent::OnLevelUp() {
 }
 
@@ -61,6 +78,14 @@ void UTraitsComponent::MarkPreviewingChanges() {
 }
 
 void UTraitsComponent::K2_UnlockTraitSoft(TSoftClassPtr<UTrait> TraitBP, const FTraitDeferredDelegate& OnUnlockedTrait, int32 StartingLevel, bool bAllowAutoEquip) {
+}
+
+FTraitInfo UTraitsComponent::K2_GetTraitInfoForSlot(int32 SlotIndex) const {
+    return FTraitInfo{};
+}
+
+FTraitInfo UTraitsComponent::K2_GetTraitInfo(TSoftClassPtr<UTrait> TraitBP) const {
+    return FTraitInfo{};
 }
 
 bool UTraitsComponent::IsTraitTransient(TSubclassOf<UTrait> TraitBP) const {
@@ -105,14 +130,6 @@ int32 UTraitsComponent::GetTraitLevel(TSoftClassPtr<UTrait> TraitBP, bool ApplyM
 
 int32 UTraitsComponent::GetTraitInstanceData(TSubclassOf<UTrait> TraitBP) {
     return 0;
-}
-
-FTraitInfo UTraitsComponent::GetTraitInfoForSlot(int32 SlotIndex) const {
-    return FTraitInfo{};
-}
-
-FTraitInfo UTraitsComponent::GetTraitInfo(TSoftClassPtr<UTrait> TraitBP) const {
-    return FTraitInfo{};
 }
 
 int32 UTraitsComponent::GetTotalArchetypeLevel() {
@@ -186,11 +203,4 @@ void UTraitsComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
     DOREPLIFETIME(UTraitsComponent, Traits);
 }
 
-UTraitsComponent::UTraitsComponent() {
-    this->TraitPointsPerLevelTable = NULL;
-    this->TraitPointsPerLevel = 1;
-    this->MaxTraitPoints = 60;
-    this->UnlockedTraitLevel = 1;
-    this->TraitPoints = 0;
-}
 

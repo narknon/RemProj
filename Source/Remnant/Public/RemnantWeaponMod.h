@@ -2,18 +2,21 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "DamageInfo.h"
+#include "EEquipmentTarget.h"
 #include "EquipmentMod.h"
 #include "RangedWeaponMode.h"
+#include "RangedWeaponModeInterface.h"
+#include "AddModPowerParams.h"
 #include "EModInputMode.h"
-#include "LoadableModAsset.h"
 #include "MinionSummonableInterface.h"
 #include "RemnantWeaponMod.generated.h"
 
+class AActor;
 class ARemnantRangedWeapon;
-class UObject;
+class ARemnantWeaponMod;
 
 UCLASS(Blueprintable)
-class REMNANT_API ARemnantWeaponMod : public AEquipmentMod, public IMinionSummonableInterface {
+class REMNANT_API ARemnantWeaponMod : public AEquipmentMod, public IRangedWeaponModeInterface, public IMinionSummonableInterface {
     GENERATED_BODY()
 public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
@@ -35,13 +38,31 @@ public:
     float MinimumHoldTime;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    float MaximumHoldTime;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool bShouldUseChargesDuringWeaponMode;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     bool bUseAllChargesOnConsume;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    int32 NumChargesConsumedOnAllConsume;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    int32 NumChargesConsumedOnUse;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool WeaponModeHasInfiniteClip;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     bool bToggleable;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     bool bHasSecondaryAction;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool bAllowDeactivateIfNotSecondaryUse;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     bool bRequiresAllowActionForUse;
@@ -53,6 +74,15 @@ public:
     bool bBlocksActionsWhileInUse;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool AllowWeaponModeDuringAction;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool AllowUseDuringWeaponUseDown;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool NoModGenWhileModActive;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FRangedWeaponMode WeaponMode;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
@@ -60,6 +90,12 @@ public:
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FName DeactivateAnimation;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    bool SkipDeactivateAnimForLastCharge;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    FName ProjectileAssetToVisualize;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FName UseStartAnimation;
@@ -75,6 +111,9 @@ public:
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FName SecondaryUseAnimation;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    FName SecondaryHeldUseAnimation;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     FName UseState;
@@ -97,12 +136,8 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
     TArray<FName> CharacterAnimTags;
     
-protected:
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
-    TArray<FLoadableModAsset> Assets;
-    
-public:
-    ARemnantWeaponMod();
+    ARemnantWeaponMod(const FObjectInitializer& ObjectInitializer);
+
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     bool ShowReticule();
     
@@ -142,11 +177,6 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void OnFire(const FVector& From, const FVector& To, float WeaponSpread);
     
-protected:
-    UFUNCTION(BlueprintCallable)
-    void OnFinishLoadingAssets();
-    
-public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void OnEndUse();
     
@@ -169,7 +199,13 @@ public:
     void OnActivate();
     
     UFUNCTION(BlueprintCallable)
+    static void ModifyModPowerEx(AActor* TargetActor, EEquipmentTarget EquipmentTarget, float Delta, FName TargetSlotNameID);
+    
+    UFUNCTION(BlueprintCallable)
     void ModifyModPower(float Delta);
+    
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void ModifyIsSecondaryUse(UPARAM(Ref) bool& bIsSecondaryUse);
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
     bool IsUseState(FName State) const;
@@ -183,6 +219,9 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent, BlueprintPure)
     float GetWindupOverdrawnProgress(const float TimePassed) const;
     
+    UFUNCTION(BlueprintCallable)
+    static TArray<ARemnantWeaponMod*> GetWeaponModsForModTarget(AActor* TargetActor, EEquipmentTarget EquipmentTarget, FName TargetSlotNameID);
+    
     UFUNCTION(BlueprintCallable, BlueprintPure)
     ARemnantRangedWeapon* GetWeapon() const;
     
@@ -192,17 +231,20 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure)
     float GetPowerBasis() const;
     
-    UFUNCTION(BlueprintCallable, BlueprintPure)
-    UClass* GetModAssetAsClass(FName AssetName) const;
-    
-    UFUNCTION(BlueprintCallable, BlueprintPure)
-    UObject* GetModAsset(FName AssetName) const;
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    FName GetModDeactivateAnimation();
     
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     float GetModActiveRemainingPct();
     
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    FName GetModActivateAnimation();
+    
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent, BlueprintPure)
     int32 GetMaxCharges() const;
+    
+    UFUNCTION(BlueprintCallable)
+    bool GetLastAltFireStateHeld();
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
     bool GetClientAimVector(FVector& AimOrigin, FVector& AimEnd);
@@ -217,18 +259,21 @@ public:
     bool CanDeactivateMod();
     
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    bool CalculateClientAimVector(FVector& AimOrigin, FVector& AimEnd);
+    bool CanAddModPowerFromDamage(const FDamageInfo& DamageInfo);
     
-    UFUNCTION(BlueprintCallable, BlueprintPure)
-    bool AreAssetsLoaded() const;
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    bool CalculateClientAimVector(FVector& AimOrigin, FVector& AimEnd);
     
     UFUNCTION(BlueprintCallable)
     void ApplyDamageInfoToModPower(const FDamageInfo& DamageInfo, float ModPowerScalar, bool bForce, bool bIgnorePenalties, bool bFillActiveMods);
     
+    UFUNCTION(BlueprintCallable)
+    static void AddModPowerEx(FAddModPowerParams Params);
+    
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void AddModPower(float Damage, float BonusModPowerMod, bool bFillActiveMods);
     
-    
+
     // Fix for true pure virtual functions not being implemented
 };
 

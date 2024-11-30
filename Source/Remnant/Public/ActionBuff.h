@@ -10,10 +10,10 @@ UCLASS(Blueprintable)
 class REMNANT_API UActionBuff : public UActionBase {
     GENERATED_BODY()
 public:
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, meta=(AllowPrivateAccess=true))
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, meta=(AllowPrivateAccess=true, ExposeOnSpawn = true))
     float Duration;
     
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true, ExposeOnSpawn = true))
     bool Persistent;
     
     UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess=true))
@@ -40,7 +40,11 @@ protected:
     
 public:
     UActionBuff();
+
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+    void SavePersistenceMetadata(TMap<FName, int32>& MetaData) const;
     
     UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
     void ResetTimerWithNewDuration(float InDuration);
@@ -50,6 +54,12 @@ public:
     
     UFUNCTION(BlueprintCallable)
     void PauseDuration(bool Paused);
+    
+    UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+    void OnAddedFromPersistence();
+    
+    UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+    void LoadPersistenceMetadata(const TMap<FName, int32>& MetaData);
     
     UFUNCTION(BlueprintCallable, BlueprintPure)
     bool IsDurationPaused() const;

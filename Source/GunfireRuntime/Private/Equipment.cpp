@@ -2,6 +2,23 @@
 #include "Net/UnrealNetwork.h"
 #include "StatsComponent.h"
 
+AEquipment::AEquipment(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
+    this->bNetUseOwnerRelevancy = true;
+    this->AnimationLayer = TEXT("UpperBody");
+    this->AutoEnableInput = true;
+    this->ShouldUnequip = true;
+    this->UseEquipmentAnimTimings = false;
+    this->FallbackToCharacterTimings = false;
+    this->StopAnimsRegardlessOfTimingTarget = false;
+    this->bSupportSlaveAnimations = false;
+    this->StatsComp = CreateDefaultSubobject<UStatsComponent>(TEXT("StatsComp"));
+    this->Character = NULL;
+    this->CharacterReplicated = NULL;
+    this->CustomizationComponent = NULL;
+    this->bIsActiveReplicated = false;
+    this->bIsInHandReplicated = false;
+}
+
 bool AEquipment::ValidateEquip_Implementation(ACharacterGunfire* ToCharacter) {
     return false;
 }
@@ -47,6 +64,12 @@ void AEquipment::OnSkeletalMeshAnimInitialized() {
 
 
 
+void AEquipment::OnFinishLoadingAssets() {
+}
+
+
+void AEquipment::OnEquipmentAssetsLoaded_Implementation() {
+}
 
 
 
@@ -87,6 +110,9 @@ float AEquipment::GetStat(FName Stat) {
     return 0.0f;
 }
 
+void AEquipment::GetSlaveAnimLayerOverrideFor_Implementation(FName AnimationID, FName& InOutLayer) {
+}
+
 uint8 AEquipment::GetModSlotIndexByNameID(FName SlotNameID) {
     return 0;
 }
@@ -115,6 +141,14 @@ AEquipmentMod* AEquipment::GetEquipmentMod(uint8 Slot) {
     return NULL;
 }
 
+UClass* AEquipment::GetEquipmentAssetClass(FName AssetName) const {
+    return NULL;
+}
+
+UObject* AEquipment::GetEquipmentAsset(FName AssetName) const {
+    return NULL;
+}
+
 FName AEquipment::GetCurrentAnimation() const {
     return NAME_None;
 }
@@ -127,6 +161,10 @@ TArray<AEquipmentMod*> AEquipment::GetAttachedMods() {
     return TArray<AEquipmentMod*>();
 }
 
+FName AEquipment::GetAnimationLayer_Implementation() {
+    return NAME_None;
+}
+
 void AEquipment::Detach() {
 }
 
@@ -137,6 +175,10 @@ void AEquipment::ComputeStats() {
 }
 
 void AEquipment::ComputeCharacterStats() {
+}
+
+bool AEquipment::AreAssetsLoaded() const {
+    return false;
 }
 
 void AEquipment::Activate() {
@@ -156,16 +198,4 @@ void AEquipment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
     DOREPLIFETIME(AEquipment, bIsInHandReplicated);
 }
 
-AEquipment::AEquipment() {
-    this->AnimationLayer = TEXT("UpperBody");
-    this->AutoEnableInput = true;
-    this->ShouldUnequip = true;
-    this->UseEquipmentAnimTimings = false;
-    this->StatsComp = CreateDefaultSubobject<UStatsComponent>(TEXT("StatsComp"));
-    this->Character = NULL;
-    this->CharacterReplicated = NULL;
-    this->CustomizationComponent = NULL;
-    this->bIsActiveReplicated = false;
-    this->bIsInHandReplicated = false;
-}
 

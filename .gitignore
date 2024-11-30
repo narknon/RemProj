@@ -78,6 +78,7 @@
 !*.config
 !*.version
 !.git*
+!*.uasset
 
 # Projects and makefiles
 !*.cmake
@@ -126,6 +127,8 @@
 !/Plugins/**/Binaries/Win64/*
 *.pdb
 
+# Add exceptions for blueprint files
+!/Content/*
 
 !USMAP/*
 
